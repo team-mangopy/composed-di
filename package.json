@@ -1,7 +1,7 @@
 {
   "name": "composed-di",
   "private": false,
-  "version": "0.2.7",
+  "version": "0.2.9",
   "author": "Juan Herrera juanhr454@gmail.com",
   "type": "commonjs",
   "main": "./dist/index.js",
@@ -9,7 +9,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "require": "./dist/index.js"
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "files": [
@@ -24,10 +25,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/imherrera/composed-di"
+    "url": "git+https://github.com/imherrera/composed-di.git"
   },
   "scripts": {
     "build": "tsc --build",
+    "clean": "tsc --build --clean",
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
