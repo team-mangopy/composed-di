@@ -33,7 +33,8 @@
     "clean": "tsc --build --clean",
     "prepublishOnly": "npm run build",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepare": "npm run build"
   },
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.10",
