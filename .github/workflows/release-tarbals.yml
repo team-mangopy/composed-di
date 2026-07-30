@@ -1,0 +1,60 @@
+name: release-tarballs
+
+# Builds the composed-di packages at a given tag and attaches prebuilt
+# tarballs to that tag's GitHub release. Consumers install them via
+# https://github.com/team-mangopy/composed-di/releases/download/<tag>/<pkg>.tgz
+#
+# Manual dispatch (not tag-triggered): tags are mirrored from upstream and
+# don't contain this file, so a push trigger would never fire.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing git tag to build (e.g. v0.13.3)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build
+
+      - name: Pack packages with version-less asset names
+        run: |
+          mkdir -p artifacts
+          for dir in packages/*/; do
+            name="$(basename "$dir")"
+            (cd "$dir" && pnpm pack --pack-destination "$GITHUB_WORKSPACE/artifacts")
+            mv artifacts/composed-di-"$name"-*.tgz "artifacts/$name.tgz"
+          done
+          ls -l artifacts
+
+      - name: Attach tarballs to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ inputs.tag }}"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            gh release upload "$tag" artifacts/*.tgz --clobber
+          else
+            gh release create "$tag" artifacts/*.tgz --title "$tag" \
+              --notes "Prebuilt package tarballs for $tag"
+          fi
