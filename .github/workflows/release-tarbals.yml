@@ -4,9 +4,14 @@ name: release-tarballs
 # tarballs to that tag's GitHub release. Consumers install them via
 # https://github.com/team-mangopy/composed-di/releases/download/<tag>/<pkg>.tgz
 #
-# Manual dispatch (not tag-triggered): tags are mirrored from upstream and
-# don't contain this file, so a push trigger would never fire.
+# Publishing a release in this fork builds and attaches the tarballs to it
+# automatically. Caveat: release/tag events run the workflow file at the
+# tag's commit, so this only fires for tags cut from a commit that contains
+# this file (fork master onwards). Tags mirrored from upstream predate it —
+# for those, use the manual dispatch with the tag name.
 on:
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       tag:
@@ -22,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ inputs.tag || github.event.release.tag_name }}
 
       - uses: pnpm/action-setup@v4
         with:
@@ -51,7 +56,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="${{ inputs.tag }}"
+          tag="${{ inputs.tag || github.event.release.tag_name }}"
           if gh release view "$tag" > /dev/null 2>&1; then
             gh release upload "$tag" artifacts/*.tgz --clobber
           else
